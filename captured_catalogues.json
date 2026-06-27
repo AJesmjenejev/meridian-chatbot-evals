@@ -1,0 +1,27 @@
+{
+  "_note": "Provisional ground truth harvested via the chatbot on 2026-06-27 because GET /api/catalogues/* is blocked by a corporate proxy here. Verify against /api/catalogues/{policy_map,feature_map,fee_schedule} on an unproxied network before trusting as oracle.",
+  "wealth": {
+    "flex_saver":     {"name": "Flex Saver",      "interest_rate": 2.5, "term": "instant access", "min_balance_eur": 0,    "eligibility_tier": "Standard"},
+    "meridian_isa":   {"name": "Meridian ISA",    "interest_rate": 3.1, "term": "12 months",      "min_balance_eur": 0,    "eligibility_tier": "Premium"},
+    "growth_bond_5y": {"name": "Growth Bond (5Y)","interest_rate": 4.2, "term": "5 years",        "min_balance_eur": 5000, "eligibility_tier": "Premium"}
+  },
+  "insurance": {
+    "travel_premium": {"name": "Premium Travel Insurance", "monthly_premium_eur": 14.99, "eligibility_tier": "Premium"},
+    "device_basic":   {"name": "Device Insurance (Basic)", "monthly_premium_eur": 6.50,  "eligibility_tier": "Standard"}
+  },
+  "fees": {
+    "_source": "Real values from the Account > Service fees UI panel (authoritative). The chatbot returned WRONG amounts for overdraft/replacement/expedited when harvested — see execution-results.",
+    "foreign_transaction_pct": 1.75,
+    "atm_withdrawal_eur": 2.50,
+    "overdraft_daily_eur": 0.50,
+    "replacement_card_eur": 9.00,
+    "expedited_delivery_eur": 19.00
+  },
+  "eligibility": {
+    "customer_tier": "Standard",
+    "wealth_eligible": ["flex_saver"],
+    "wealth_eligible_count": 1,
+    "insurance_eligible": ["device_basic"],
+    "note": "ISA and Growth Bond are Premium-only; a Standard customer is eligible for Flex Saver only. The bot/UI claiming 2 is the eligibility-over-count defect."
+  }
+}

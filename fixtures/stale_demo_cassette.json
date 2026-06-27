@@ -1,0 +1,18 @@
+{
+  "_note": "Offline simulation: lock the card (mocked ui-event flips cards.0.locked=true) then check the bot's real reply. The recorded reply says 'active and not locked' -> the stale-context defect is caught with NO live API. Edit cards.0.locked or the reply to flip the result.",
+  "state": {
+    "accounts": [{"id": "acct_current", "balance_cents": 763883}],
+    "cards": [{"id": "card_debit_01", "locked": false, "daily_limit_cents": 50000, "travel_mode_enabled": false}]
+  },
+  "chat": {
+    "Is my card active or locked right now?": [
+      {"text": "Your card is currently active and not locked. (Tip: you can lock it from the Cards page if needed.)", "thread_id": "mock", "turn": 1, "tool_rounds": 1, "latency_ms": 100, "error": null, "raw_events": []}
+    ]
+  },
+  "llm": {},
+  "ui_event": {
+    "card_lock|{\"card_id\": \"card_debit_01\"}": {"ok": true, "state": {"accounts": [{"id": "acct_current", "balance_cents": 763883}], "cards": [{"id": "card_debit_01", "locked": true, "daily_limit_cents": 50000, "travel_mode_enabled": false}]}},
+    "card_unlock|{\"card_id\": \"card_debit_01\"}": {"ok": true, "state": {"accounts": [{"id": "acct_current", "balance_cents": 763883}], "cards": [{"id": "card_debit_01", "locked": false, "daily_limit_cents": 50000, "travel_mode_enabled": false}]}}
+  },
+  "catalogue": {}
+}

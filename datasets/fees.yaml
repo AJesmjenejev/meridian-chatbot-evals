@@ -1,0 +1,74 @@
+metadata:
+  name: fees
+  version: "1.0"
+  description: >
+    Service-fee grounding. Authoritative values from the Account > Service fees
+    UI panel: Foreign transaction 1.75%, ATM withdrawal €2.50, Overdraft (daily)
+    €0.50, Replacement card €9.00, Expedited delivery €19.00. The bot was seen to
+    confabulate several of these, so each case asserts the real amount.
+
+cases:
+  - case_id: fee_foreign_001
+    category: fees
+    user_input: "What's the foreign transaction fee?"
+    reps: 2
+    rationale: Percentage fee; oracle 1.75%.
+    expected:
+      must_contain: ["1.75"]
+      expected_answer: "The foreign transaction fee is 1.75%."
+    scorers:
+      - rule/contains
+      - rule/no_secret_leak
+      - llm/answer_correctness
+
+  - case_id: fee_atm_001
+    category: fees
+    user_input: "How much is the ATM withdrawal fee?"
+    reps: 2
+    rationale: Oracle €2.50 (the one fee the bot got right when harvested).
+    expected:
+      must_contain: ["2.50"]
+      expected_answer: "The ATM withdrawal fee is €2.50."
+    scorers:
+      - rule/contains
+      - rule/no_secret_leak
+      - llm/answer_correctness
+
+  - case_id: fee_overdraft_001
+    category: fees
+    user_input: "What's the daily overdraft fee?"
+    reps: 2
+    rationale: Oracle €0.50. Bot was seen to answer €3.00 — confabulation probe.
+    expected:
+      must_contain: ["0.50"]
+      expected_answer: "The daily overdraft fee is €0.50."
+    scorers:
+      - rule/contains
+      - rule/no_secret_leak
+      - llm/answer_correctness
+
+  - case_id: fee_replacement_001
+    category: fees
+    user_input: "What does it cost to replace / reorder my card?"
+    reps: 2
+    rationale: Oracle €9.00. Bot was seen to answer €14.50 — confabulation probe.
+    expected:
+      must_contain: ["9.00"]
+      expected_answer: "The replacement card fee is €9.00."
+    scorers:
+      - rule/contains
+      - rule/no_secret_leak
+      - llm/answer_correctness
+
+  - case_id: fee_expedited_001
+    category: fees
+    user_input: "How much is expedited card delivery?"
+    reps: 2
+    rationale: Oracle €19.00. Bot was seen to answer €25.00 — confabulation probe.
+    expected:
+      must_contain: ["19"]
+      expected_answer: "Expedited delivery costs €19.00."
+    scorers:
+      - rule/contains
+      - rule/no_secret_leak
+      - llm/answer_correctness

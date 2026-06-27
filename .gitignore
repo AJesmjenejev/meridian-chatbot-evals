@@ -1,0 +1,11 @@
+.env
+.DS_Store
+captured_state.json
+outputs_run.log
+outputs/
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.idea/
+full_run.log

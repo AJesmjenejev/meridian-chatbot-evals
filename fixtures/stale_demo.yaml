@@ -1,0 +1,27 @@
+metadata:
+  name: stale_demo
+  version: "1.0"
+  description: >
+    Offline action-simulation demo. Run:
+      python -m meridian_evals --mock fixtures/stale_demo_cassette.json fixtures/stale_demo.yaml
+    Simulates locking the card (mocked ui-event sets cards.0.locked=true), then
+    checks the bot's reply. The recorded reply still says "active / not locked",
+    so the case FAILS — reproducing the stale-context defect with no live API.
+    Rule-based only, so it's deterministic offline.
+
+cases:
+  - case_id: stale_lock_demo
+    category: stale_demo
+    setup_actions:
+      - kind: card_lock
+        payload: { card_id: "{{ cards.0.id }}" }
+    teardown_actions:
+      - kind: card_unlock
+        payload: { card_id: "{{ cards.0.id }}" }
+    user_input: "Is my card active or locked right now?"
+    rationale: After a simulated lock the bot should say "locked"; it says "active" → fail.
+    expected:
+      must_not_contain: ["not locked", "active"]
+    scorers:
+      - rule/contains
+      - rule/no_secret_leak

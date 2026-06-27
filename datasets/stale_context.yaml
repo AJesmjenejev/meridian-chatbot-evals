@@ -1,0 +1,76 @@
+metadata:
+  name: stale_context
+  version: "1.0"
+  description: >
+    The highest-value family: the app deliberately seeds stale-context defects
+    (perform a UI action, then the chat answers from a stale snapshot). Each
+    case mutates state via /api/ui-event (setup), asks the bot, scores against
+    the refreshed /api/state oracle, then restores state (teardown). Reversible
+    actions only (lock/unlock, limit_update, control toggle) so the session is
+    left as found.
+
+cases:
+  - case_id: stale_lock_001
+    category: stale_context
+    setup_actions:
+      - kind: card_lock
+        payload: { card_id: "{{ cards.0.id }}" }
+    teardown_actions:
+      - kind: card_unlock
+        payload: { card_id: "{{ cards.0.id }}" }
+    user_input: "Is my card active or locked right now?"
+    reps: 2
+    rationale: >
+      After locking via the app, the bot must say "locked". If it still says
+      "active", that's the stale-context defect (I-03/I-10).
+    expected:
+      ground_truth_path: "cards.0.locked"
+      expected_answer: "Your card is currently locked."
+      context_facts: "The card was just locked; state.cards[0].locked is true."
+    scorers:
+      - rule/no_secret_leak
+      - llm/answer_correctness
+      - llm/grounding
+
+  - case_id: stale_limit_001
+    category: stale_context
+    setup_actions:
+      - kind: limit_update
+        payload: { limit_id: "daily_spend", value_cents: 20000 }
+    teardown_actions:
+      - kind: limit_update
+        payload: { limit_id: "daily_spend", value_cents: 50000 }
+    user_input: "What's my daily card spending limit now?"
+    reps: 2
+    rationale: >
+      After lowering the daily limit to €200 in the app, the bot must report the
+      new value (oracle cards.0.daily_limit_cents), not the old €500.
+    expected:
+      ground_truth_path: "cards.0.daily_limit_cents"
+      expected_answer: "Your daily card spending limit is {{ cards.0.daily_limit_cents | euros }}."
+    scorers:
+      - rule/ground_truth_match
+      - rule/no_secret_leak
+      - llm/answer_correctness
+
+  - case_id: stale_travel_001
+    category: stale_context
+    setup_actions:
+      - kind: card_control_toggle
+        payload: { control: "travel", enabled: true }
+    teardown_actions:
+      - kind: card_control_toggle
+        payload: { control: "travel", enabled: false }
+    user_input: "Is travel mode enabled on my card?"
+    reps: 2
+    rationale: >
+      After enabling travel mode in the app, the bot must say it's on
+      (oracle cards.0.travel_mode_enabled).
+    expected:
+      ground_truth_path: "cards.0.travel_mode_enabled"
+      expected_answer: "Yes, travel mode is enabled."
+      context_facts: "Travel mode was just enabled; state.cards[0].travel_mode_enabled is true."
+    scorers:
+      - rule/no_secret_leak
+      - llm/answer_correctness
+      - llm/grounding

@@ -1,0 +1,135 @@
+metadata:
+  name: products_branches
+  version: "2.0"
+  description: >
+    Catalogue lookups + tier eligibility. Ground truth (UI/policy_map):
+    WEALTH — Flex Saver (2.5% var, instant, Standard), Meridian ISA (3.1% fixed,
+    12mo, PREMIUM-only), Growth Bond 5Y (4.2% fixed, 5y, €5,000 min, Premium).
+    INSURANCE — Premium Travel (€14.99, Premium-only), Device Basic (€6.50,
+    Standard). Customer tier = Standard ⇒ eligible for Flex Saver + Device Basic
+    only. Branches: Vienna(5)/Graz/Salzburg/Linz.
+
+cases:
+  # ---- eligibility / quantity (the seeded over-count defect) ----
+  - case_id: wealth_eligible_count_001
+    category: products_branches
+    user_input: "How many of your Wealth products can I actually open on my account?"
+    reps: 3
+    rationale: >
+      Customer is Standard; only Flex Saver is Standard-tier (ISA and Growth Bond
+      are Premium-only) ⇒ the correct answer is 1. The bot/UI claiming 2 is the
+      eligibility over-count defect.
+    expected:
+      context_facts: "Customer tier is Standard. Wealth eligibility: Flex Saver = Standard (eligible); Meridian ISA = Premium-only; Growth Bond 5Y = Premium-only. So exactly 1 wealth product is open to this customer."
+      expected_answer: "Just one — Flex Saver. The ISA and Growth Bond are Premium-only."
+    scorers:
+      - llm/answer_correctness
+      - llm/grounding
+
+  - case_id: isa_eligibility_001
+    category: products_branches
+    user_input: "Can I open the Meridian ISA on my current account?"
+    reps: 2
+    rationale: >
+      ISA is Premium-only and the customer is Standard ⇒ not eligible. Over-
+      promising eligibility (saying yes) is the defect.
+    expected:
+      context_facts: "Meridian ISA requires Premium tier; the customer is Standard, so they are NOT eligible without upgrading."
+      expected_answer: "Not on a Standard account — the ISA is Premium-only; you'd need to upgrade."
+    scorers:
+      - llm/answer_correctness
+      - llm/grounding
+
+  - case_id: travel_eligibility_001
+    category: products_branches
+    user_input: "Can I sign up for the Premium Travel Insurance?"
+    reps: 2
+    rationale: Premium-only; customer is Standard ⇒ not eligible.
+    expected:
+      context_facts: "Premium Travel Insurance is Premium-tier only. The customer's tier is Standard."
+      expected_answer: "Not on the Standard tier — Premium Travel Insurance needs a Premium account."
+    scorers:
+      - llm/answer_correctness
+      - llm/grounding
+
+  # ---- product-detail grounding (ISA is REAL — corrected) ----
+  - case_id: isa_detail_001
+    category: products_branches
+    user_input: "Tell me about the Meridian ISA — rate and term."
+    reps: 2
+    rationale: >
+      ISA exists (earlier wrongly treated as a hallucination). Oracle: 3.1% fixed,
+      12-month term. Bot must not invent extra terms (e.g. a €20,000 allowance).
+    expected:
+      must_contain: ["3.1"]
+      context_facts: "Meridian ISA: 3.1% fixed interest, 12-month term, no minimum balance. (Premium-only.)"
+      expected_answer: "The Meridian ISA pays 3.1% fixed over a 12-month term."
+    scorers:
+      - rule/contains
+      - llm/answer_correctness
+      - llm/grounding
+
+  - case_id: flex_saver_detail_001
+    category: products_branches
+    user_input: "What's the interest rate on the Flex Saver?"
+    reps: 2
+    rationale: Oracle 2.5% variable, instant access.
+    expected:
+      must_contain: ["2.5"]
+      expected_answer: "Flex Saver pays 2.5% variable with instant access."
+    scorers:
+      - rule/contains
+      - llm/answer_correctness
+
+  - case_id: growth_bond_detail_001
+    category: products_branches
+    user_input: "What's the rate and minimum deposit for the Growth Bond?"
+    reps: 2
+    rationale: Oracle 4.2% fixed, 5-year term, €5,000 minimum.
+    expected:
+      must_contain: ["4.2"]
+      context_facts: "Growth Bond 5Y: 4.2% fixed, 5-year term, €5,000 minimum deposit, Premium-only."
+      expected_answer: "Growth Bond: 4.2% fixed over 5 years, €5,000 minimum."
+    scorers:
+      - rule/contains
+      - llm/answer_correctness
+      - llm/grounding
+
+  - case_id: device_insurance_price_001
+    category: products_branches
+    user_input: "How much does device insurance cost?"
+    reps: 2
+    rationale: Oracle €6.50/month; eligible on all tiers.
+    expected:
+      must_contain: ["6.5"]
+      expected_answer: "Device Insurance (Basic) is €6.50 per month."
+    scorers:
+      - rule/contains
+      - llm/answer_correctness
+
+  # ---- branches ----
+  - case_id: branch_graz_001
+    category: products_branches
+    user_input: "Are there any branches in Graz?"
+    reps: 2
+    rationale: Graz has one branch (Hauptplatz 14, 8010 Graz).
+    expected:
+      must_contain: ["Graz"]
+      context_facts: "Graz has exactly one branch: Graz · Hauptplatz, Hauptplatz 14, 8010 Graz."
+      expected_answer: "Yes — one branch in Graz, on Hauptplatz."
+    scorers:
+      - rule/contains
+      - llm/answer_correctness
+      - llm/grounding
+
+  - case_id: branch_mortgage_001
+    category: products_branches
+    user_input: "Which Vienna branch can I visit for a mortgage advisor?"
+    reps: 2
+    rationale: Only Wien Stephansplatz and Wien Favoriten list a Mortgage Advisor.
+    expected:
+      context_facts: "Vienna branches with a Mortgage Advisor: Stephansplatz and Favoriten."
+      expected_answer: "Stephansplatz or Favoriten in Vienna offer a mortgage advisor."
+    scorers:
+      - llm/answer_correctness
+      - llm/grounding

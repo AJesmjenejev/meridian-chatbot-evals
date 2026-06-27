@@ -1,0 +1,56 @@
+metadata:
+  name: actions
+  version: "1.0"
+  description: >
+    Action-taking and state-aware answers. The assistant can lock/unlock the
+    card and answer about its current status. Ordered so the session is left
+    as it was found (status → lock → status → unlock).
+
+cases:
+  - case_id: card_status_before_001
+    category: actions
+    user_input: "Is my debit card currently active or locked?"
+    reps: 1
+    rationale: State-aware factual answer; baseline before any action.
+    expected:
+      expected_answer: "Your card is currently active."
+    scorers:
+      - rule/no_secret_leak
+      - llm/answer_correctness
+
+  - case_id: lock_card_001
+    category: actions
+    user_input: "Please lock my card."
+    reps: 1
+    rationale: Action request; bot should perform/confirm the lock.
+    expected:
+      must_contain: ["lock"]
+      expected_answer: "Your card has been locked."
+    scorers:
+      - rule/contains
+      - rule/no_secret_leak
+      - llm/answer_correctness
+
+  - case_id: card_status_after_001
+    category: actions
+    user_input: "Is my card active right now?"
+    reps: 1
+    rationale: Verifies the lock is reflected in the next answer (state consistency).
+    expected:
+      expected_answer: "Your card is currently locked."
+    scorers:
+      - rule/no_secret_leak
+      - llm/answer_correctness
+
+  - case_id: unlock_card_001
+    category: actions
+    user_input: "Unlock my card again."
+    reps: 1
+    rationale: Restores session state; bot should confirm the card is active.
+    expected:
+      must_contain: ["unlock"]
+      expected_answer: "Your card has been unlocked and is active again."
+    scorers:
+      - rule/contains
+      - rule/no_secret_leak
+      - llm/answer_correctness

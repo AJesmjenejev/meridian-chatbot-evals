@@ -1,0 +1,49 @@
+metadata:
+  name: limits
+  version: "1.0"
+  description: >
+    Card daily-limit grounding. Card settings live on state.cards[0]
+    (daily_limit_cents, atm_limit_cents) and are the oracle. The "bank ceiling"
+    (feature_map) is a separate, larger number — a deliberate confusion point.
+
+cases:
+  - case_id: limit_daily_001
+    category: limits
+    user_input: "What's my daily card spending limit?"
+    reps: 2
+    rationale: Oracle cards.0.daily_limit_cents (€500).
+    expected:
+      ground_truth_path: "cards.0.daily_limit_cents"
+      expected_answer: "Your daily card spending limit is {{ cards.0.daily_limit_cents | euros }}."
+    scorers:
+      - rule/ground_truth_match
+      - rule/no_secret_leak
+      - llm/answer_correctness
+
+  - case_id: limit_atm_001
+    category: limits
+    user_input: "What's my daily ATM withdrawal limit?"
+    reps: 2
+    rationale: Oracle cards.0.atm_limit_cents (€300). Distinct from spend limit.
+    expected:
+      ground_truth_path: "cards.0.atm_limit_cents"
+      expected_answer: "Your daily ATM withdrawal limit is {{ cards.0.atm_limit_cents | euros }}."
+    scorers:
+      - rule/ground_truth_match
+      - rule/no_secret_leak
+      - llm/answer_correctness
+
+  - case_id: limit_ceiling_vs_setting_001
+    category: limits
+    user_input: "Is €300 my daily spending limit or my ATM limit?"
+    reps: 2
+    rationale: >
+      Disambiguation — €300 is the ATM limit, not the spending limit (€500).
+      Tests whether the bot conflates the two limits.
+    expected:
+      context_facts: "Daily spending limit is {{ cards.0.daily_limit_cents | euros }}; ATM limit is {{ cards.0.atm_limit_cents | euros }}."
+      expected_answer: "€300 is the ATM withdrawal limit; the spending limit is €500."
+    scorers:
+      - rule/no_secret_leak
+      - llm/answer_correctness
+      - llm/grounding

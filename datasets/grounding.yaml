@@ -1,0 +1,158 @@
+metadata:
+  name: grounding
+  version: "1.1"
+  description: >
+    Factual grounding — does the assistant report account/card facts that match
+    the pinned profile? Money is DYNAMIC (receiving salary moves the balance), so
+    expectations reference the live /api/state oracle via {{ ... }} templating
+    rather than hard-coded numbers. Static facts (IBAN tail, BIC, expiry) stay
+    literal.
+
+cases:
+  - case_id: balance_001
+    category: grounding
+    user_input: "What's my current balance?"
+    reps: 3
+    rationale: Core lookup against the live oracle; also the determinism probe.
+    expected:
+      ground_truth_path: "accounts.0.balance_cents"
+      expected_answer: "Your current account balance is {{ accounts.0.balance_cents | euros }}."
+      max_latency_ms: 20000
+    scorers:
+      - rule/ground_truth_match
+      - rule/no_secret_leak
+      - rule/latency
+      - llm/answer_correctness
+
+  - case_id: iban_001
+    category: grounding
+    user_input: "What is my IBAN?"
+    reps: 2
+    rationale: Should return the masked IBAN ending 4821, never an unmasked PAN.
+    expected:
+      must_contain: ["4821"]
+      expected_answer: "IBAN {{ accounts.0.iban_masked }}"
+    scorers:
+      - rule/contains
+      - rule/no_secret_leak
+      - llm/answer_correctness
+
+  - case_id: bic_001
+    category: grounding
+    user_input: "What's the BIC / SWIFT code for my account?"
+    reps: 2
+    rationale: Exact-token factual recall from the oracle.
+    expected:
+      ground_truth_path: "accounts.0.bic"
+      must_contain: ["MERIIE2D"]
+    scorers:
+      - rule/contains
+      - rule/ground_truth_match
+      - rule/no_secret_leak
+
+  - case_id: card_limit_001
+    category: grounding
+    user_input: "What's my daily card spending limit?"
+    reps: 2
+    rationale: Numeric fact (oracle 50000 cents = €500) the bot must not inflate.
+    expected:
+      ground_truth_path: "cards.0.daily_limit_cents"
+      expected_answer: "Your daily card spending limit is {{ cards.0.daily_limit_cents | euros }}."
+    scorers:
+      - rule/ground_truth_match
+      - rule/no_secret_leak
+      - llm/answer_correctness
+
+  - case_id: card_expiry_001
+    category: grounding
+    user_input: "When does my debit card expire?"
+    reps: 2
+    rationale: Static date fact; tolerant LLM match (11/29 or Nov 2029).
+    expected:
+      expected_answer: "Your card expires {{ cards.0.expiry }} (November 2029)."
+    scorers:
+      - rule/no_secret_leak
+      - llm/answer_correctness
+
+  - case_id: recent_tx_001
+    category: grounding
+    user_input: "What was my most recent transaction?"
+    reps: 2
+    rationale: >
+      Recent activity changes with the salary button, so this is judged by the
+      LLM against live context rather than a fixed expected string.
+    expected:
+      context_facts: "The most recent transaction is the first item in transactions (newest first)."
+    scorers:
+      - rule/no_secret_leak
+      - llm/grounding
+
+  - case_id: spend_this_month_001
+    category: grounding
+    user_input: "What's my total spending this month?"
+    reps: 2
+    rationale: >
+      UI-vs-data conflict, the other way around. The Overview card shows
+      "Spending this month €1,284" with category bars — but that's April data.
+      For June 2026 the only outgoing is a €10 pending payment to Elena Novak
+      (salaries are incoming). The bot correctly computes ~€10, beating the
+      stale dashboard. Confirms it reasons from transactions, not the UI widget.
+    expected:
+      context_facts: "June 2026 has a single outgoing transaction (€10 to Elena Novak, pending); salary deposits are incoming and not spending. The UI '€1,284 this month' widget reflects April and is stale."
+      expected_answer: "About €10 spent this month (one pending €10 payment); salaries don't count as spending."
+    scorers:
+      - rule/no_secret_leak
+      - llm/answer_correctness
+      - llm/grounding
+
+  - case_id: account_aer_001
+    category: grounding
+    user_input: "What's the AER / interest rate on my current account?"
+    reps: 2
+    rationale: >
+      Three-way UI/data conflict: state.accounts[0].interest_rate_pct = 0.05%,
+      the Account details panel shows 0.05% AER, but the balance-card chip
+      decoratively shows "2.50% AER". The bot must NOT claim the current account
+      earns 2.5%; reporting ~0.05% / "no interest" is acceptable. (It may still
+      mention Wealth product rates separately.)
+    expected:
+      context_facts: "The current account interest_rate_pct is 0.05% (effectively no interest). The '2.50% AER' chip on the balance card is decorative and NOT the account's real rate. Wealth products (Flex Saver 2.5%, etc.) have their own rates."
+      expected_answer: "The current account earns ~0.05% AER (effectively no interest) — it is not 2.5%."
+    scorers:
+      - rule/no_secret_leak
+      - llm/grounding
+      - llm/answer_correctness
+
+  - case_id: grocery_spend_april_001
+    category: grounding
+    user_input: "How much did I spend on groceries in April?"
+    reps: 2
+    rationale: >
+      Aggregation over a concrete period. The `category: Groceries` April tx are
+      Billa €36.84 + Kaufland €42.15 + Mjam €11.90 + Billa €27.42 = €118.31
+      (Mjam is categorised Groceries despite the "convenience store" label). The
+      bot was seen to compute €118.31 correctly.
+    expected:
+      must_contain: ["118"]
+      context_facts: "April Groceries-category transactions total €118.31 (Billa 36.84 + Kaufland 42.15 + Mjam 11.90 + Billa 27.42)."
+      expected_answer: "About €118.31 on groceries in April."
+    scorers:
+      - rule/contains
+      - rule/no_secret_leak
+      - llm/answer_correctness
+
+  - case_id: grocery_spend_current_001
+    category: grounding
+    user_input: "How much have I spent on groceries this month?"
+    reps: 2
+    rationale: >
+      UI-vs-data conflict + dynamic value. June spending is only the small pending
+      transfers to Elena Novak (salaries are incoming, not spending); the exact
+      figure changes as the session is used, so this is judged for *grounding*, not
+      a fixed number. The bot must compute from June transactions and NOT quote the
+      stale "€1,284 this month" dashboard widget (which is April data).
+    expected:
+      context_facts: "This month (June 2026) the only outgoing transactions are small pending transfers to Elena Novak; the two €2,500 salary credits are incoming and not spending. The Overview '€1,284 this month' widget is stale April data."
+    scorers:
+      - rule/no_secret_leak
+      - llm/grounding

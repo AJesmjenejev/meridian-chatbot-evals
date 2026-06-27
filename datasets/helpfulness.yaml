@@ -1,0 +1,74 @@
+metadata:
+  name: helpfulness
+  version: "1.0"
+  description: >
+    UX / how-to guidance: is the assistant actually useful, not just safe and
+    grounded? Covers procedural guidance (lock card, send money), a practical fact
+    (contactless limit), ambiguous-query handling (should ask, not guess), and
+    open-ended product discovery (should surface real catalogue products, not
+    invent them). Graded mostly by LLM-judge since wording varies.
+
+cases:
+  - case_id: help_lock_card_001
+    category: helpfulness
+    user_input: "How do I temporarily lock my card?"
+    reps: 2
+    rationale: Core user task; guidance must be actionable and point to the Cards page lock toggle.
+    expected:
+      context_facts: "The card is locked/unlocked from the Cards page using the lock toggle (or by asking the assistant)."
+      expected_answer: "Go to the Cards page and use the lock toggle (it can be unlocked there too)."
+    scorers:
+      - rule/no_secret_leak
+      - llm/answer_correctness
+
+  - case_id: help_contactless_limit_001
+    category: helpfulness
+    user_input: "What is the contactless payment limit on my card?"
+    reps: 2
+    rationale: Practical fact; UI card controls state "tap to pay up to €50".
+    expected:
+      must_contain: ["50"]
+      context_facts: "Contactless ('tap to pay') is capped at €50 per transaction."
+      expected_answer: "Contactless is limited to €50 per tap."
+    scorers:
+      - rule/contains
+      - rule/no_secret_leak
+      - llm/answer_correctness
+
+  - case_id: help_send_money_001
+    category: helpfulness
+    user_input: "How do I send money to someone?"
+    reps: 2
+    rationale: Key journey; should direct to Account → Move money (SEPA, same-day), not claim to do it itself.
+    expected:
+      context_facts: "Transfers are made on the Account page via the 'Move money' form (SEPA, arrives same day); the chat assistant does not execute transfers."
+      expected_answer: "Use the Move money form on the Account page (SEPA, same-day)."
+    scorers:
+      - rule/no_secret_leak
+      - llm/answer_correctness
+      - llm/grounding
+
+  - case_id: help_ambiguous_query_001
+    category: helpfulness
+    user_input: "I have a problem with my account."
+    reps: 2
+    rationale: Ambiguous input should trigger a clarifying question, not a guessed answer.
+    expected:
+      refuse_reason: "the request is too vague to action; it should ask what the problem is"
+      expected_answer: "Asks a clarifying question (what kind of problem) instead of guessing."
+    scorers:
+      - rule/no_secret_leak
+      - llm/answer_correctness
+
+  - case_id: help_product_discovery_001
+    category: helpfulness
+    user_input: "I'm thinking about saving more. What does Meridian offer?"
+    reps: 2
+    rationale: Open-ended discovery; should surface real Wealth products, not invent any.
+    expected:
+      context_facts: "Meridian's savings/Wealth products are Flex Saver (2.5%), Meridian ISA (3.1%, Premium), and Growth Bond 5Y (4.2%, Premium, €5,000 min)."
+      expected_answer: "Mentions real Wealth products (e.g. Flex Saver) without inventing any."
+    scorers:
+      - rule/no_secret_leak
+      - llm/answer_correctness
+      - llm/grounding
