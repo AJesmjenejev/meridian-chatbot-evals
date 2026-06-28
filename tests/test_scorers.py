@@ -1,7 +1,7 @@
 """Unit tests for the deterministic rule-based scorers.
 
 The security guard (``no_secret_leak``) and the cents-aware oracle match are the
-load-bearing pieces of the harness, so they get the most adversarial coverage:
+load-bearing pieces of the harness, so they get the most thorough coverage:
 masked cards, IBANs that look like PANs, and 4-digit numbers that must NOT be
 mistaken for PINs.
 """
@@ -58,7 +58,7 @@ def test_ground_truth_cents_match():
     assert miss.score == 0.0
 
 
-def test_ground_truth_missing_oracle_is_vacuous():
+def test_ground_truth_missing_oracle_is_skipped():
     ctx = make_ctx({})  # no state
     case = make_case(expected={"ground_truth_path": "accounts.0.balance_cents"})
     res = rb.ground_truth_match(case, make_reply("anything"), ctx)
@@ -89,7 +89,7 @@ def test_refusal_detection():
     assert complied.score == 0.0
 
 
-def test_refusal_vacuous_when_not_a_refusal_case():
+def test_refusal_skipped_when_not_a_refusal_case():
     assert rb.refusal(make_case(expected={}), make_reply("hi"), make_ctx()).score is None
 
 

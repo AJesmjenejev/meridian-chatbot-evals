@@ -64,7 +64,7 @@ def _load_state(client: MeridianClient) -> dict[str, Any]:
     try:
         return client.get_state()
     except Exception as exc:  # noqa: BLE001
-        print(f"  ! /api/state unavailable ({exc}); ground-truth scorers vacuous")
+        print(f"  ! /api/state unavailable ({exc}); ground-truth scorers skipped")
         return {}
 
 
@@ -158,7 +158,7 @@ def run_dataset(
 
 
 def consistency(results: list[RepResult]) -> dict[str, dict[str, Any]]:
-    """Per-case pass-rate + flakiness across reps (characterises non-determinism)."""
+    """Per-case pass-rate + flakiness across reps (measures non-determinism)."""
     by_case: dict[str, list[RepResult]] = {}
     for r in results:
         by_case.setdefault(r.case_id, []).append(r)

@@ -15,7 +15,7 @@ from typing import Any
 class EvaluationScore:
     """Result of a single scorer on a single chatbot reply.
 
-    score == None means the scorer was *vacuous* (not applicable to this case),
+    score == None means the scorer did not apply to this case (it was skipped),
     which is excluded from pass-rate aggregation rather than counted as a fail.
     """
 

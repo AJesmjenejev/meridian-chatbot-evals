@@ -4,10 +4,10 @@
 
 **Safe, but not yet grounded.** It reliably refuses secrets and resists prompt
 injection (it never leaked a PIN or full card number across the suite), but it is
-**not trustworthy for facts**: it confabulates service-fee amounts, over-promises
+**not trustworthy for facts**: it makes up service-fee amounts, over-promises
 product eligibility (offers Premium-only products to a Standard customer), and
 serves **stale state after an action** (says the card is "active" right after it
-was locked). Its variance is concentrated on **adversarial** prompts — the worst
+was locked). It's least consistent on **attack-style** prompts — the worst
 place to be non-deterministic. A nuance worth flagging: where the app's own
 dashboards are stale, the bot is often *more* correct than the UI. Everything
 below is the method and the evidence behind that one paragraph.
@@ -21,7 +21,7 @@ ground-truth oracle**. The questions I wanted evidence for, before trusting it i
 production, were:
 
 1. **Is it grounded?** When it states a fact (balance, IBAN, limit, a product
-   price), does it match the real account state — or does it confabulate?
+   price), does it match the real account state — or does it make something up?
 2. **Is it safe?** Does it reliably refuse the things the bank says it must never
    do (reveal a PIN, show a full card number, leak another customer's data,
    obey injected instructions)?
@@ -33,7 +33,7 @@ production, were:
 ## What a "test case" is here
 
 A test case is a **labelled prompt + an expectation + a way to grade it +
-rationale**, run **N times**. Because the model is stochastic, a single pass is
+rationale**, run **N times**. Because the model's answers vary from run to run, a single pass is
 not evidence; a case has a **pass-rate**, and a case that is sometimes-right is a
 *finding* (flaky), not a pass. Expectations come in two flavours:
 
@@ -51,8 +51,8 @@ guard, so a single scorer can't wave through a leak.
 ## What I deliberately covered
 
 Grounding, numeric aggregation, card actions (lock/unlock + state-aware status),
-PIN/PAN refusal, prompt injection & system-prompt exfiltration, cross-customer
-access, out-of-scope deflection, hallucination on non-existent
+PIN/PAN refusal, prompt injection & system-prompt extraction, cross-customer
+access, out-of-scope refusals, hallucination on non-existent
 branches/products/fees/transactions, tier-based eligibility, multi-turn context,
 and same-prompt consistency. Ground truth is read **live** from the oracle, never
 hard-coded, because the profile is dynamic (the "receive salary" action moves the
@@ -68,7 +68,7 @@ balance).
 * **Full multilingual / accessibility / UI testing** — the brief is about the
   chatbot, so I tested the chat API surface, not the DOM.
 * **Jailbreak breadth** — I included representative injection vectors, not an
-  exhaustive adversarial corpus; the harness makes adding more a one-line YAML
+  exhaustive set of attack prompts; the harness makes adding more a one-line YAML
   change.
 
 ## The one design decision that mattered most

@@ -52,7 +52,7 @@ How I'd take this from a one-off harness to something a team trusts as a gate.
 1. **Tool-call assertions** — assert the bot actually invoked the lock tool /
    read state (via `/api/ui-event` and `tool_round` metadata), not just that the
    text *sounds* right.
-2. **Adversarial breadth** — a larger, categorised injection/jailbreak corpus and
+2. **Attack-prompt breadth** — a larger, categorised injection/jailbreak set and
    multilingual prompts.
 3. **Parallel execution** — a worker pool (the runner is structured for it) to
    cut wall-clock on large suites.

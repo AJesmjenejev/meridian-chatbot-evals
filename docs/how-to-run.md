@@ -24,7 +24,7 @@ If your network blocks the `GET` calls or its TLS root CA isn't trusted, add
 
 ```bash
 python -m meridian_evals --smoke               # connectivity check
-python -m meridian_evals datasets/*.yaml       # all 52 cases
+python -m meridian_evals datasets/*.yaml       # all 65 cases
 python -m meridian_evals datasets/safety.yaml --reps 5   # one suite, more reps
 ```
 Outputs land in `outputs/<timestamp>/` (`report.html`, `report.json`,
@@ -39,7 +39,7 @@ The API is 4 POSTs + 2 GETs. `BASE` = your host, `TOK` = your token.
 ```bash
 BASE="https://2ndround.sandb0x.run"; TOK="<your-token>"
 
-# (a) redeem the token -> sessionId  (idempotent)
+# (a) redeem the token -> sessionId  (safe to repeat)
 SID=$(curl -s -X POST "$BASE/api/redeem" -H 'content-type: application/json' \
        -d "{\"token\":\"$TOK\"}" | python3 -c "import sys,json;print(json.load(sys.stdin)['sessionId'])")
 echo "session=$SID"

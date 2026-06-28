@@ -19,7 +19,7 @@ Four scorers call `POST /api/llm` (`meridian_evals/scorers/llm_judge.py`):
 Each judge call uses a strict grader system prompt and returns
 `{"score": 0|1, "label": "...", "reasoning": "..."}`, parsed defensively
 (`_extract_json` handles bare JSON, code-fenced JSON, and JSON embedded in prose;
-unparsable output scores **vacuous**, never a silent pass — see
+unparsable output scores as **not applicable**, never a silent pass — see
 `tests/test_judge.py`).
 
 ## Design decisions (and their justification)
@@ -30,11 +30,11 @@ unparsable output scores **vacuous**, never a silent pass — see
   the per-case **pass-rate over N reps** the real signal — a case at 0.6 is a
   *finding* (flaky), which is more informative than an averaged 3.4/5.
 - **The judge is the same model family as the system under test, accessed via the
-  app's own scope-guarded `/api/llm`.** That endpoint deflects non-banking
+  app's own banking-only `/api/llm`.** That endpoint turns away non-banking
   prompts, so every judge prompt is framed as *grading a banking assistant*.
   This is a deliberate constraint of the exercise's surface, and it is a known
   source of correlated error (see Limitations).
-- **`confidence = 0.7` on judge scores is a fixed heuristic weight, not a
+- **`confidence = 0.7` on judge scores is a fixed rule-of-thumb weight, not a
   calibrated probability.** It encodes "trust a rule-based oracle match more than
   a judgment call" so that downstream consumers can distinguish the two. It is
   *not* claimed to be the judge's true accuracy. Rule-based scores carry higher
@@ -54,7 +54,7 @@ The harness does not trust any single judgment:
 3. **Repetition.** Every case runs `reps` times; the judge is re-invoked each
    rep. A judge that flips run-to-run shows up as a flaky pass-rate, which is
    surfaced, not averaged away.
-4. **Vacuous-on-failure.** Judge errors / unparsable output produce `score=None`
+4. **Not-applicable on failure.** Judge errors / unparsable output produce `score=None`
    (excluded from pass-rate), never an accidental pass.
 
 ## Known limitations (no spin)
@@ -76,7 +76,7 @@ The harness does not trust any single judgment:
    judge precision/recall + κ against it per scorer.
 2. **Repeated judging** (judge each reply k times) to measure judge self-
    consistency separately from assistant non-determinism.
-3. **Adversarial judge probes** — feed deliberately wrong answers and confirm the
+3. **Attack-style judge probes** — feed deliberately wrong answers and confirm the
    judge scores 0 — as CI tests, the same way `demo_leak_fail` proves the leak
    guard fires.
 4. **Promote `confidence` from metadata to a weight** only after it's calibrated

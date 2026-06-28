@@ -159,7 +159,7 @@ class MockClient:
     def llm(self, user: str, system: str | None = None) -> dict[str, Any]:
         resp = self._cass.data["llm"].get(_llm_key(user, system))
         if resp is None:
-            # No recorded judge verdict -> let the judge scorer score vacuous.
+            # No recorded judge verdict -> let the judge scorer score as not-applicable.
             raise RuntimeError("no recorded /api/llm response in cassette")
         return resp
 

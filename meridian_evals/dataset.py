@@ -18,7 +18,7 @@ from .scorers import all_scorers
 
 # Scorers that are meaningless without a specific expected field. Each value is
 # an "any-of" group: the case must supply at least one of these keys in
-# ``expected``, otherwise the scorer would silently score vacuous (None) and the
+# ``expected``, otherwise the scorer would silently score as not-applicable (None) and the
 # case would look covered when it is not. This is the "expected schema per
 # scorer" guard.
 _REQUIRED_EXPECTED: dict[str, tuple[str, ...]] = {

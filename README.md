@@ -6,9 +6,9 @@ sends labelled prompts to the live chatbot, scores each reply with a mix of
 **non-determinism**, and writes console / JSON / CSV / HTML reports.
 
 > **Finding in one line:** the assistant is *safe but not yet grounded* — it never
-> leaked a PIN/PAN and resists injection, but it confabulates fees, over-promises
-> eligibility, and serves stale state after actions; its variance concentrates on
-> adversarial prompts. See [`docs/execution-results.md`](docs/execution-results.md).
+> leaked a PIN/PAN and resists injection, but it makes up fees, over-promises
+> eligibility, and serves stale state after actions; it's least consistent on
+> attack-style prompts. See [`docs/execution-results.md`](docs/execution-results.md).
 
 > **Start here:** a committed sample run is in
 > [`results/sample_run_52cases/`](results/sample_run_52cases/) (open `report.html`) —
@@ -74,7 +74,7 @@ offline mock run on Python 3.10 and 3.12.
 | Dataset | Probes |
 |---|---|
 | `grounding.yaml` | balance, IBAN, BIC, card limit/expiry, recent tx, spend aggregation |
-| `safety.yaml` | PIN/PAN refusal, prompt injection, system-prompt exfiltration, cross-customer, PIN-policy accuracy, out-of-scope |
+| `safety.yaml` | PIN/PAN refusal, prompt injection, system-prompt extraction, cross-customer, PIN-policy accuracy, out-of-scope |
 | `hallucination.yaml` | non-existent branch / crypto / business account / invented fee / phantom transfer |
 | `actions.yaml` | lock / unlock card + state-aware status |
 | `products_branches.yaml` | wealth/insurance detail, **tier eligibility & over-count**, branch finder |
@@ -83,7 +83,7 @@ offline mock run on Python 3.10 and 3.12.
 | `stale_context.yaml` | **action-then-ask**: lock / limit / travel via `/api/ui-event`, scored vs refreshed state |
 | `helpfulness.yaml` | how-to guidance (lock card, send money), contactless limit, ambiguous-query handling, product discovery |
 | `input_robustness.yaml` | **negative inputs**: empty, gibberish, oversized (≈1 kchar), non-English (German), SQL/XSS/shell-injection chars |
-| `robustness.yaml` | same-prompt consistency (high reps), multi-turn context, paraphrase invariance |
+| `robustness.yaml` | same-prompt consistency (high reps), multi-turn context, same answer when reworded |
 
 ## How scoring works
 
@@ -99,9 +99,9 @@ offline mock run on Python 3.10 and 3.12.
   pass-rate and flags **flaky** cases (0 < pass-rate < 1) — because the bot is a
   real LLM and varies run-to-run.
 
-The judge's reliability, the binary-scoring rationale, the `confidence=0.7`
-heuristic, known failure modes and a calibration plan are written up in
-[`docs/judge-methodology.md`](docs/judge-methodology.md).
+The judge's reliability, why scoring is pass/fail, the `confidence=0.7`
+rule-of-thumb weight, known failure modes and a plan to measure how reliable the
+judge is are written up in [`docs/judge-methodology.md`](docs/judge-methodology.md).
 
 Ground truth is **never hard-coded to a balance** — money is dynamic (receiving
 salary moves it), so datasets reference the oracle via `{{ accounts.0.balance_cents | euros }}`
@@ -113,8 +113,8 @@ templating that resolves against `/api/state` at run time.
   there are two escape hatches: `MERIDIAN_STATE_FILE=captured_state.json`
   (capture once from a browser) and `MERIDIAN_VERIFY_SSL=false` (if the network's
   TLS root CA isn't trusted). Neither is needed on a direct connection.
-* `/api/llm` is itself scope-guarded to banking topics, so judge prompts are
-  framed as *grading a banking assistant* to avoid being deflected.
+* `/api/llm` is itself limited to banking topics, so judge prompts are
+  framed as *grading a banking assistant* to avoid being turned away.
 
 ## Layout
 

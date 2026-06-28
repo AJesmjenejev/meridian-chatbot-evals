@@ -20,11 +20,11 @@ datasets then pin down. Turn numbers below refer to that transcript.
   I added transfers (turns 465/501/725) — the bot tracks this better than the UI's
   stale "€1,284" widget.
 
-### Fees are confabulated — confirmed and consistent
+### Fees are made up — confirmed and consistent
 - Overdraft **€3.00** (real €0.50), replacement **€14.50** (real €9.00), expedited
   **€25.00** (real €19.00) — repeated identically (turns 559, 651–671, 1118–1138).
   ATM €2.50 is the only correct one.
-- **Foreign-transaction fee: the bot won't answer at all** — it deflects with "I can
+- **Foreign-transaction fee: the bot won't answer at all** — it sidesteps with "I can
   help with your account, transactions, card, fees, …" (turns 635/639/1102/1106).
   A flat capability gap on a fee that exists (1.75%).
 
@@ -70,7 +70,7 @@ datasets then pin down. Turn numbers below refer to that transcript.
 
 ### AER — doesn't propagate the misleading UI chip
 - Asked about the current-account rate it says "does not earn interest" (turn 615)
-  or deflects (turn 735) — never the decorative "2.50% AER" chip. The data is
+  or declines (turn 735) — never the decorative "2.50% AER" chip. The data is
   three-way inconsistent (chip 2.50% / details 0.05% / bot "none").
 
 ## Why this matters for the eval design
